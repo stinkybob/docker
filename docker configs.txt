@@ -1,0 +1,292 @@
+Beaner
+======
+docker run \
+-dit --name apache \
+-e PGID=1002 -e PUID=1002 \
+-p 80:80 -p 443:443 \
+-v /usr/local/docker/apache/htdocs:/usr/local/apache2/htdocs/ \
+-v /usr/local/docker/apache/config/httpd.conf:/usr/local/apache2/conf/httpd.conf \
+-v /usr/local/docker/apache/config/httpd-ssl.conf:/usr/local/apache2/conf/extra/httpd-ssl.conf \
+-v /usr/local/docker/apache/config/httpd-vhosts.conf:/usr/local/apache2/conf/extra/httpd-vhosts.conf \
+-v /usr/local/docker/apache/config/server.crt:/usr/local/apache2/conf/server.crt \
+-v /usr/local/docker/apache/config/server.key:/usr/local/apache2/conf/server.key \
+-v /usr/local/docker/apache/config/htpasswd:/usr/local/apache2/conf/.htpasswd \
+-v /usr/local/docker/apache/logs:/usr/local/apache2/logs \
+-v /usr/local/docker/apache/var_log:/var/log \
+--restart=always \
+httpd:2.4
+
+docker create \
+--name php \
+-e PGID=1002 -e PUID=1002 \
+-p 90:80 \
+-v /usr/local/docker/apache/php:/var/www/html/ \
+--restart=always \
+eboraas/apache-php
+
+docker create \
+  --name=unifi \
+  --restart=always \
+  -v /usr/local/docker/unifi:/config \
+  -e PGID=1001 -e PUID=1001  \
+  -p 3478:3478/udp \
+  -p 10001:10001/udp \
+  -p 8080:8080 \
+  -p 8081:8081 \
+  -p 8443:8443 \
+  -p 8843:8843 \
+  -p 8880:8880 \
+  linuxserver/unifi
+
+# import unifi backup
+
+
+docker run -d \
+  --name watchtower \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  --restart=always \
+  centurylink/watchtower --cleanup
+
+sudo mkdir /usr/local/docker/plexpy /usr/local/docker/plexpy/config /usr/local/docker/plexpy/logs
+sudo chown -R tv:tv /usr/local/docker/plexpy
+docker create \
+  --name=plexpy \
+  -v /usr/local/docker/plexpy/config:/config \
+  -v /usr/local/docker/plexpy/logs:/logs:ro \
+  -e PGID=1003 -e PUID=1003  \
+  -e TZ=America/Chicago \
+  -p 8181:8181 \
+  --restart=always \
+  linuxserver/tautulli
+
+docker create \
+  --name=glances \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  --restart="always" \
+  -p 61208-61209:61208-61209 \
+  -e GLANCES_OPT="-w" \
+  --pid host \
+  docker.io/nicolargo/glances
+
+docker run -d -p 3000:3000 \
+--name="manage-this-node" \
+-v /usr/local/docker/managethis:/config \
+--restart="always" \
+nathanthegr8/manage-this-node
+
+docker create \
+    --name=plexrequests \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /usr/local/docker/plexrequests:/config \
+    -e PGID=1003 -e PUID=1003  \
+    -p 3030:3000 \
+    --restart=always \
+    linuxserver/plexrequests
+
+docker create \
+    --name=ombi \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /usr/local/docker/ombi:/config \
+    -e PGID=1003 -e PUID=1003  \
+    -p 3579:3579 \
+    --restart=always \
+    linuxserver/ombi
+
+sudo mkdir /usr/local/docker/ombi-beta
+sudo chown tv:tv /usr/local/docker/ombi-beta
+docker create \
+    --name=ombi-beta \
+    -v /usr/local/docker/ombi-beta:/config \
+    -e PGID=1003 -e PUID=1003  \
+    -e TZ=America/Chicago \
+    -p 3579:3579 \
+--restart=always \
+    lsiodev/ombi-preview
+
+
+docker create \
+    --name gmailrelay \
+    -p 9025:25 \
+    -e SYSTEM_TIMEZONE="America/Chicago" \
+    -e MYNETWORKS="192.168.0.0/16 172.0.0.0/8" \
+    -e EMAIL="email@gmail.com" \
+    -e EMAILPASS="password" \
+    --restart=always \
+    lylescott/postfix-gmail-relay
+
+docker create \
+  --name=ubooquity \
+  -v /usr/local/docker/ubooquity/config:/config \
+  -v /usr/local/docker/ubooquity/books:/books \
+  -v /usr/local/docker/ubooquity/comics:/comics \
+  -v /usr/local/docker/ubooquity/files:/files \
+  -e PGID=1003 -e PUID=1003  \
+  -p 2202:2202 \
+--restart=always \
+  linuxserver/ubooquity
+
+docker create \
+--name=openvpn-as \
+-v /usr/local/docker/openvpn/config:/config \
+-v /usr/local/docker/openvpn/shadow:/etc/shadow \
+-v /usr/local/docker/openvpn/resolv.conf:/etc/resolv.conf \
+-e PGID=1003 -e PUID=1003 \
+-e TZ=America/Chicago \
+-e INTERFACE=enp0s10 \
+--net=host --privileged \
+--restart=always \
+linuxserver/openvpn-as
+
+docker run \
+  -p 7080:80 \
+  -p 7443:443 \
+  -e TZ=American/Chicago \
+  -v /usr/local/docker/unms:/config \
+  -e PUBLIC_HTTPS_PORT=7443 \
+  -e PUBLIC_WS_PORT=7443 \
+--restart=always \
+  oznu/unms:latest
+
+
+Brick
+====
+docker run -d \
+    --name watchtower \
+    --restart="always" \
+    -v /var/run/docker.sock:/var/run/docker.sock \
+   centurylink/watchtower
+
+docker create \
+     --name=glances \
+     -v /var/run/docker.sock:/var/run/docker.sock:ro \
+     --restart="always" \
+     -p 61208-61209:61208-61209 \
+     -e GLANCES_OPT="-w" \
+     --pid host \
+    docker.io/nicolargo/glances
+
+adduser tv
+rsync -av brick:/shared/ /shared/
+mkdir /usr/local/docker/plex/config /usr/local/docker/plex/transcode
+rsync -av brick:/var/lib/plexmediaserver/ /usr/local/docker/plex/config/
+chown -R tv:tv /shared
+chown -R tv:tv /usr/local/docker/plex
+docker create \
+--name plex \
+-p 32400:32400/tcp \
+-p 33400:33400/tcp \
+-p 3005:3005/tcp \
+-p 8324:8324/tcp \
+-p 32469:32469/tcp \
+-p 1900:1900/udp \
+-p 32410:32410/udp \
+-p 32412:32412/udp \
+-p 32413:32413/udp \
+-p 32414:32414/udp \
+-e TZ="America/Chicago" \
+-e PLEX_CLAIM="claim-CODEHERE" \
+-e ADVERTISE_IP="http://192.168.1.5:32400/" \
+-e PLEX_UID=1003 \
+-e PLEX_GID=1003 \
+-h stinkyplex \
+-v /usr/local/docker/plex/config:/config \
+-v /usr/local/docker/plex/transcode:/transcode \
+-v /shared:/shared \
+--restart=always \
+plexinc/pms-docker:plexpass
+
+sudo mkdir /usr/local/docker/sabnzbd
+sudo chown -R tv:tv /usr/local/docker/sabnzbd
+docker create --name=sabnzbd \
+-v /usr/local/docker/sabnzbd:/config \
+-v /shared/My\ Downloads:/downloads \
+-v /shared/temp/sab/downloads/incomplete:/incomplete-downloads \
+-v /shared:/shared \
+-e PGID=1003 -e PUID=1003 \
+-e TZ=America/Chicago \
+-p 9080:8080 -p 9090:9090 \
+--restart=always \
+linuxserver/sabnzbd
+
+
+sudo mkdir /usr/local/docker/sonarr
+sudo chown tv:tv /usr/local/docker/sonarr
+docker create \
+    --name sonarr \
+    -p 8989:8989 \
+    -e PUID=1003 -e PGID=1003 \
+    -v /dev/rtc:/dev/rtc:ro \
+    -v /etc/localtime:/etc/localtime:ro \
+    -v /usr/local/docker/sonarr:/config \
+    -v /shared:/shared \
+    -v /shared/My\ Downloads:/downloads \
+    -v /shared/temp/sab/downloads/incomplete:/incomplete-downloads \
+    --restart=always \
+    linuxserver/sonarr
+
+sudo mkdir /usr/local/docker/couchpotato
+sudo chown tv:tv /usr/local/docker/couchpotato
+docker create \
+    --name=couchpotato \
+    -v /usr/local/docker/couchpotato:/config \
+    -v /shared/My\ Downloads:/downloads \
+    -v /shared/My\ Downloads/Movies:/movies \
+    -e PGID=1003 -e PUID=1003  \
+    -e TZ=America/Chicago \
+    -p 5050:5050 \
+    --restart=always \ 
+    linuxserver/couchpotato
+
+
+docker run -d \
+    --cap-add=NET_ADMIN \
+    -p 8112:8112 \
+    -p 8118:8118 \
+    --name=delugevpn \
+    -v /usr/local/docker/deluge/data:/data \
+    -v /usr/local/docker/deluge/config:/config \
+    -v /etc/localtime:/etc/localtime:ro \
+    -e VPN_ENABLED=yes \
+    -e VPN_USER=user \
+    -e VPN_PASS=password7 \
+    -e VPN_REMOTE=nl.privateinternetaccess.com \
+    -e VPN_PORT=1198 \
+    -e VPN_PROTOCOL=udp \
+    -e VPN_DEVICE_TYPE=tun \
+    -e VPN_PROV=pia \
+    -e STRONG_CERTS=no \
+    -e ENABLE_PRIVOXY=yes \
+    -e LAN_NETWORK=192.168.1.0/24 \
+    -e NAME_SERVERS=8.8.8.8,8.8.4.4 \
+    -e DEBUG=false \
+    -e PUID=1003 \
+    -e PGID=1003 \
+    --restart=always \
+    binhex/arch-delugevpn
+
+
+sudo mkdir /usr/local/docker/radarr
+sudo chown tv:tv /usr/local/docker/radarr
+docker create \
+    --name radarr \
+    -p 7878:7878 \
+    -e PUID=1003 -e PGID=1003 \
+    -e TZ=America/Chicago \
+    --restart=always \
+    -v /usr/local/docker/radarr:/config \
+    -v /shared:/shared \
+    -v /shared/My\ Downloads/Movies:/movies \
+    linuxserver/radarr
+
+
+sudo mkdir /usr/local/docker/vpn
+docker run \
+    --name vpn \
+    --env-file /usr/local/docker/vpn/vpn.env \
+    --restart=always \
+    -p 500:500/udp \
+    -p 4500:4500/udp \
+    -p 1701:1701/udp \
+    -v /lib/modules:/lib/modules:ro \
+    -d --privileged \
+    hwdsl2/ipsec-vpn-server
